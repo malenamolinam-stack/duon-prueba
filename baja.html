@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DU·ON | Baja de correos</title>
+<style>
+:root{--ink:#213c2c;--green:#406d51;--orange:#eb8b4e;--line:#dce7d9}
+*{box-sizing:border-box}
+body{margin:0;background:#edf3ed;color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px}
+.logo{font-weight:900;font-size:26px;letter-spacing:-1.5px;color:var(--green);text-decoration:none}
+.dot{color:var(--orange)}
+main{max-width:620px;margin:0 auto;padding:34px 20px 62px}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px}
+h1{font-size:30px;line-height:1.15;letter-spacing:-1px;margin:6px 0 12px}
+.muted{color:#667d6c}
+a{color:var(--green)}
+</style>
+</head>
+<body>
+<header><a class="logo" href="./">DU<span class="dot">·</span>ON</a></header>
+<main>
+  <div class="card">
+    <h1 id="title">Procesando tu solicitud…</h1>
+    <p id="text" class="muted"></p>
+  </div>
+</main>
+<script>
+// Mismo proyecto y clave publicable que encuesta.html. La función solo da de baja con el token.
+const SUPABASE_URL = 'https://isqnnbbttxgotlnqxnkr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_JlZB3PGGW-D2SVnLMhkGrQ_z1SmRL8f';
+
+const title = document.getElementById('title');
+const text = document.getElementById('text');
+const token = new URLSearchParams(location.search).get('token');
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function show(t, p) { title.textContent = t; text.innerHTML = p; }
+
+(async () => {
+  if (!token || !UUID.test(token)) {
+    show('Enlace no válido', 'Revisa que copiaste el enlace completo del correo. Si sigue sin funcionar, escribe a <a href="mailto:hola@duon.com.mx">hola@duon.com.mx</a>.');
+    return;
+  }
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/unsubscribe_survey_email', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_token: token })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const found = await res.json();
+    if (found) {
+      show('Listo, te diste de baja', 'Ya no recibirás correos sobre nuevas pruebas de DU·ON.');
+    } else {
+      show('Enlace no válido', 'No encontramos una suscripción con este enlace. Si sigue sin funcionar, escribe a <a href="mailto:hola@duon.com.mx">hola@duon.com.mx</a>.');
+    }
+  } catch (err) {
+    show('No pudimos procesar tu baja', 'Inténtalo de nuevo más tarde o escribe a <a href="mailto:hola@duon.com.mx">hola@duon.com.mx</a>.');
+  }
+})();
+</script>
+</body>
+</html>
